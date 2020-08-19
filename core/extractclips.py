@@ -38,7 +38,7 @@ def getclips(url):
     # TODO: Remove before implementing the moviepy
     clean_download_directory(video_download_directory)
 
-    for clip_href in all_clips[0:4]:
+    for clip_href in all_clips[0:6]:
         print(f"Opening Clip: {clip_href}")
         driver.get(clip_href)
         time.sleep(1)
@@ -50,6 +50,8 @@ def getclips(url):
     rename_files(video_download_directory, video_url_lst)
 
 def rename_files(dir,url_lst):
+    # TODO: PermissionError: [WinError 32] The process cannot 
+    # access the file because it is being used by another process
     os.chdir(dir)
     files = os.listdir(".")
     files.sort(key=os.path.getctime)
@@ -82,6 +84,7 @@ def download_file(driver, video_url, dir):
     file_name = ""
 
     while not finished and time.time() < start + 60:
+        # TODO: Guard against file failed to download
         finished = True
         files = os.listdir(dir)
         for file in files:
