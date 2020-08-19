@@ -1,0 +1,5 @@
+
+*.ipynb
+.vscode/settings.json
+debug.log
+*.mp4
