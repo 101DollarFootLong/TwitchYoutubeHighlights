@@ -3,3 +3,9 @@
 .vscode/settings.json
 debug.log
 *.mp4
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/TwitchYoutubeHighlights.iml
+.idea/vcs.xml
+DownloadedVideos/Metropolis Black.ttf
