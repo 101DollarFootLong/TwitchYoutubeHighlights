@@ -53,11 +53,13 @@ def rename_files(dir,url_lst):
     # TODO: PermissionError: [WinError 32] The process cannot 
     # access the file because it is being used by another process
     os.chdir(dir)
+    # TODO: only list files not directory
     files = os.listdir(".")
     files.sort(key=os.path.getctime)
     creator_names_lst = []
     count = 0
     for i in range(0,len(files)):
+        # Added the _ at the end of each clip for splitting later
         creator_name = re.split('tv/|/clip',url_lst[i])[1]
         if creator_name not in creator_names_lst:
             creator_names_lst.append(creator_name)
@@ -76,7 +78,6 @@ def download_file(driver, video_url, dir):
         video_url (String): A .mp4 video url
         dir (String): The directory for the downloaded videos
     """
-    # TODO: Rename file, strip the url to get the content creator name
     driver.get(video_url)
     start = time.time()
     
