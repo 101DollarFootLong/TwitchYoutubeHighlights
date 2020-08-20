@@ -9,3 +9,5 @@ debug.log
 .idea/TwitchYoutubeHighlights.iml
 .idea/vcs.xml
 DownloadedVideos/Metropolis Black.ttf
+core/geckodriver.log
+Dependencies/chromedriver.exe
