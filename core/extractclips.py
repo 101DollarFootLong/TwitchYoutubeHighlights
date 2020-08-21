@@ -3,32 +3,30 @@ import time
 import os
 import re
 import shutil
+import logging
+
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.support import expected_conditions as EC
+
 
 fall_guys_url = "https://www.twitch.tv/directory/game/Fall%20Guys/clips?range=7d"
 league_url = "https://www.twitch.tv/directory/game/League%20of%20Legends/clips?range=7d"
 valorant = "https://www.twitch.tv/directory/game/VALORANT/clips?range=7d"
 
-def getclips(url):
+def getclips(url,num_clip):
     """Download the top clips on twitch and save it into DownloadedVideos directory
 
     Args:
         url (String): The url of a given game clip
     """
+
     # Making sure the working director is core
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     
     video_download_directory = os.getcwd().replace('core', 'DownloadedVideos')
-    
-    # Chrome
-    # chromeOptions = webdriver.ChromeOptions()
-    # prefs = {
-    # "download.default_directory": video_download_directory,
-    # "download.prompt_for_download": False,
-    # "download.directory_upgrade": True
-    # }
-    # chromeOptions.add_experimental_option("prefs",prefs)
-    # driver = webdriver.Chrome(executable_path='..\\Dependencies\\chromedriver', chrome_options=chromeOptions)
 
     # Firefox
     profile = webdriver.FirefoxProfile()
@@ -39,22 +37,35 @@ def getclips(url):
     driver = webdriver.Firefox(executable_path='..\\Dependencies\\geckodriver',firefox_profile=profile)
 
     driver.get(url)
-    time.sleep(2)
-    # TODO: Find all the English title clips
-    all_clips = driver.find_elements_by_xpath("//a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
-    print(f"Total clips found: {len(all_clips)}")
-    all_clips = get_all_hrefs(all_clips)
 
+    #all_clips = driver.find_elements_by_xpath("//a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
+
+    try:
+        clips_table = wait_for_element(driver, By.XPATH, "//div[@class='tw-flex-wrap tw-tower tw-tower--300 tw-tower--gutter-xs']")
+        all_clips = clips_table.find_elements_by_xpath("./a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
+    except Exception as e:
+        print(f"Could not find the clips table. Error: {e}")
+        return
+    
+    print(f"Total clips found: {len(all_clips)}")
+
+    all_clips = get_all_hrefs(all_clips)
     video_url_lst = []
 
     # TODO: Remove before implementing the moviepy
     clean_download_directory(video_download_directory)
 
-    for clip_href in all_clips[2:4]:
+    for clip_href in all_clips[0:num_clip]:
         print(f"Opening Clip: {clip_href}")
         driver.get(clip_href)
-        time.sleep(1)
-        video_url = driver.find_element_by_xpath("//video").get_attribute("src")
+
+        try:
+            video_tag = wait_for_element(driver, By.XPATH, "//video")
+            video_url = video_tag.get_attribute("src")
+        except Exception as e:
+            print(f"Could not find the video tag. Error: {e}")
+            return
+        
         video_url_lst.append(clip_href)
         download_file(driver,video_url, video_download_directory)
         time.sleep(2)
@@ -69,27 +80,22 @@ def rename_files(dir,url_lst):
     os.chdir(dir)
     files = os.listdir(".")
     files.sort(key=os.path.getctime)
-    creator_names_lst = []
-    prev_creator = ""
-    count = 0
+    creator_names_dict = {}
 
     for i in range(0,len(files)):
         # Added the _ at the end of each clip for splitting later
         creator_name = re.split('.tv/|/clip',url_lst[i])[1]
-        if creator_name not in creator_names_lst:
-            creator_names_lst.append(creator_name)
+        if creator_name not in creator_names_dict:
+            creator_names_dict[creator_name] = 1
             os.rename(files[i],creator_name+"_.mp4")
         else:
             # Make sure to increment the right repeting creator
-            if prev_creator == creator_name:
-                count += 1
-            else:
-                count = 1
 
-            prev_creator = creator_name
-            os.rename(files[i],creator_name+ "_" +str(count)+".mp4")
+            creator_names_dict[creator_name] = creator_names_dict[creator_name] + 1
+            current_count = creator_names_dict[creator_name] 
+
+            os.rename(files[i],creator_name+ "_" +str(current_count)+".mp4")
         
-
 def download_file(driver, video_url, dir):
     """
     Waits for Chrome to finish downloading the file  
@@ -103,12 +109,12 @@ def download_file(driver, video_url, dir):
     # Add a new window when try to download the mp4 file. 
     driver.execute_script(f"window.open('{video_url}','_blank')")
     time.sleep(2)
-    start = time.time()
+    time_out = time.time() + 60
     
     finished = False
     file_name = ""
 
-    while not finished and time.time() < start + 60:
+    while not finished and time.time() < time_out
         finished = True
         files = os.listdir(dir)
         for file in files:
@@ -140,9 +146,31 @@ def get_all_hrefs(clip_list):
     for clip in clip_list:
         href_lst.append(clip.get_attribute("href"))
     return href_lst
+
+def wait_for_element(driver,
+                        by_type,
+                        element,
+                        timeout=10,
+                        condition=EC.presence_of_element_located):
+      """
+      Wait for the presence of an element to appear on the page
+      The element can be referenced by any type supported by the 'By' class
+      :param driver:
+      :param by_type:
+      :param element:
+      :param timeout:
+      :param condition:
+      :return:
+      """
+      try:
+        element = WebDriverWait(driver, timeout).until(
+          condition((by_type, element))
+        )
+        return element
+      except TimeoutException:
+        return None
     
-if __name__ == "__main__":
-    getclips(valorant)
+getclips(valorant,2)
 
 
     
