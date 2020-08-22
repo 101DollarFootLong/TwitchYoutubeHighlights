@@ -2,9 +2,15 @@ from core.movie import render
 from core.extractclips import getclips,clean_download_directory
 from core.upload_video import upload
 import os 
+import logging
+
+logging.basicConfig(level=logging.INFO, filename='MainLogFile.log', format='%(levelname)s: %(asctime)s : main.py : %(message)s', datefmt='%m-%d-%Y %H:%M:%S')
+logger = logging.getLogger(__name__)
+
 
 dir = os.chdir(os.path.dirname(os.path.realpath(__file__)))
 print(os.getcwd())
+logger.info(os.getcwd())
 
 fall_guys_url = "https://www.twitch.tv/directory/game/Fall%20Guys/clips?range=7d"
 league_url = "https://www.twitch.tv/directory/game/League%20of%20Legends/clips?range=7d"
@@ -21,8 +27,9 @@ position = {"topleft":"x=10:y=10",
             "bottomright":"x=w-tw-10:y=h-th-10"}
 
 if __name__ == "__main__":
+    logger.info("Starting main.py script")
     getclips(valorant, num_clips)
     text_position = position["topleft"]
     render(text_position)
     clean_download_directory(os.getcwd())
-    #upload(None,None,None)
+    upload(None,None,None)

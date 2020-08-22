@@ -11,18 +11,24 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 
+# Setting logger 
+logger = logging.getLogger(__name__)
+
 def getclips(url,num_clip):
     """Download the top clips on twitch and save it into DownloadedVideos directory
 
     Args:
         url (String): The url of a given game clip
     """
+    
+    # print(f"getclips: {os.getcwd()}")
+    logger.info(f"Calling getclips(): {os.getcwd()}")
 
     # Making sure the working director is core
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     video_download_directory = os.getcwd().replace('core', 'DownloadedVideos')
 
-    print(f"getclips: {os.getcwd()}")
+
     # Firefox
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.download.folderList", 2)
@@ -32,7 +38,7 @@ def getclips(url,num_clip):
     driver = webdriver.Firefox(executable_path='..\\Dependencies\\geckodriver',firefox_profile=profile)
 
     driver.get(url)
-    print(f"Opening starting url: {url}")
+    logger.info(f"Opening starting url: {url}")
 
     try:
         time.sleep(1)
@@ -40,10 +46,12 @@ def getclips(url,num_clip):
         all_clips = driver.find_elements_by_xpath("//a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
     except Exception as e:
         print(f"Could not find the clips table. Error: {e}")
+        logger.error(f"Could not find the clips table. Error: {e}")
         return
 
     # TODO: Guard for 0 clips found
     print(f"Total clips found: {len(all_clips)}")
+    logger.info(f"Total clips found: {len(all_clips)}")
 
     all_clips = get_all_hrefs(all_clips)
     video_url_lst = []
@@ -53,6 +61,7 @@ def getclips(url,num_clip):
 
     for clip_href in all_clips[0:num_clip]:
         print(f"Opening Clip: {clip_href}")
+        logger.info(f"Opening Clip: {clip_href}")
         driver.get(clip_href)
 
         try:
@@ -61,6 +70,7 @@ def getclips(url,num_clip):
             video_url = video_tag.get_attribute("src")
         except Exception as e:
             print(f"Could not find the video tag. Error: {e}")
+            logger.error(f"Could not find the video tag. Error: {e}")
             return
         
         video_url_lst.append(clip_href)
@@ -104,7 +114,8 @@ def download_file(driver, video_url, dir):
         dir (String): The directory for the downloaded videos
     """
     # Fix the failed to download file by switching to firefox browser
-    # Add a new window when try to download the mp4 file. 
+    # Add a new window when try to download the mp4 file.
+    logger.info("Attempting to download the file")
     driver.execute_script(f"window.open('{video_url}','_blank')")
     time.sleep(2)
     time_out = time.time() + 60
@@ -121,6 +132,10 @@ def download_file(driver, video_url, dir):
                 file_name = file.split(".part")[0]
                 finished = False
 
+    if not finished:
+        logger.error(f"Download didn't finish after 60 seconds. URL: {url}")
+        return
+
 def clean_download_directory(dir):
     """
     Given a directory path remove all mp4 files
@@ -129,6 +144,7 @@ def clean_download_directory(dir):
     """
     
     print("Cleaning your directory!!")
+    logger.info("Cleaning your directory!!")
     filelist = [ f for f in os.listdir(dir) if f.endswith(".mp4") ]
     for f in filelist:
         os.remove(os.path.join(dir, f))
@@ -167,7 +183,8 @@ def wait_for_element(driver,
         return element
       except TimeoutException:
         return None
-    
+
+
 
 
     
