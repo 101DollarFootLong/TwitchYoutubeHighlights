@@ -13,3 +13,7 @@ core/geckodriver.log
 Dependencies/chromedriver.exe
 Dependencies/client file..json
 DownloadedVideos/AT-cm 823982093.mp4.part
+*.pyc
+Dependencies/client_secret.json
+Dependencies/token_youtube_v3.pickle
+geckodriver.log

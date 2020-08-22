@@ -11,11 +11,6 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 
-
-fall_guys_url = "https://www.twitch.tv/directory/game/Fall%20Guys/clips?range=7d"
-league_url = "https://www.twitch.tv/directory/game/League%20of%20Legends/clips?range=7d"
-valorant = "https://www.twitch.tv/directory/game/VALORANT/clips?range=7d"
-
 def getclips(url,num_clip):
     """Download the top clips on twitch and save it into DownloadedVideos directory
 
@@ -25,9 +20,9 @@ def getclips(url,num_clip):
 
     # Making sure the working director is core
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    
     video_download_directory = os.getcwd().replace('core', 'DownloadedVideos')
 
+    print(f"getclips: {os.getcwd()}")
     # Firefox
     profile = webdriver.FirefoxProfile()
     profile.set_preference("browser.download.folderList", 2)
@@ -38,30 +33,36 @@ def getclips(url,num_clip):
 
     driver.get(url)
 
-    #all_clips = driver.find_elements_by_xpath("//a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
+    time.sleep(1)
+    all_clips = driver.find_elements_by_xpath("//a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
 
-    try:
-        clips_table = wait_for_element(driver, By.XPATH, "//div[@class='tw-flex-wrap tw-tower tw-tower--300 tw-tower--gutter-xs']")
-        all_clips = clips_table.find_elements_by_xpath("./a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
-    except Exception as e:
-        print(f"Could not find the clips table. Error: {e}")
-        return
+    # TODO: Getting 0 clips
+    # try:
+    #     clips_table = wait_for_element(driver, By.XPATH, "//div[@class='tw-flex-wrap tw-tower tw-tower--300 tw-tower--gutter-xs']")
+    #     all_clips = clips_table.find_elements_by_xpath("./a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
+    # except Exception as e:
+    #     print(f"Could not find the clips table. Error: {e}")
+    #     return
     
+    # TODO: Guard for 0 clips found
     print(f"Total clips found: {len(all_clips)}")
 
     all_clips = get_all_hrefs(all_clips)
     video_url_lst = []
 
     # TODO: Remove before implementing the moviepy
-    clean_download_directory(video_download_directory)
+    # clean_download_directory(video_download_directory)
 
     for clip_href in all_clips[0:num_clip]:
         print(f"Opening Clip: {clip_href}")
         driver.get(clip_href)
 
         try:
-            video_tag = wait_for_element(driver, By.XPATH, "//video")
-            video_url = video_tag.get_attribute("src")
+            #video_tag = wait_for_element(driver, By.XPATH, "//video")
+            #video_url = video_tag.get_attribute("src")
+
+            time.sleep(1)
+            video_url = driver.find_element_by_xpath("//video").get_attribute("src")
         except Exception as e:
             print(f"Could not find the video tag. Error: {e}")
             return
@@ -71,6 +72,7 @@ def getclips(url,num_clip):
         time.sleep(2)
 
     rename_files(video_download_directory, video_url_lst)
+    driver.close()
 
 def rename_files(dir,url_lst):
     # TODO: PermissionError: [WinError 32] The process cannot 
@@ -114,7 +116,7 @@ def download_file(driver, video_url, dir):
     finished = False
     file_name = ""
 
-    while not finished and time.time() < time_out
+    while not finished and time.time() < time_out:
         finished = True
         files = os.listdir(dir)
         for file in files:
@@ -170,7 +172,6 @@ def wait_for_element(driver,
       except TimeoutException:
         return None
     
-getclips(valorant,2)
 
 
     
