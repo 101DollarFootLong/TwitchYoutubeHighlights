@@ -32,18 +32,16 @@ def getclips(url,num_clip):
     driver = webdriver.Firefox(executable_path='..\\Dependencies\\geckodriver',firefox_profile=profile)
 
     driver.get(url)
+    print(f"Opening starting url: {url}")
 
-    time.sleep(1)
-    all_clips = driver.find_elements_by_xpath("//a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
+    try:
+        time.sleep(1)
+        clips_table = wait_for_element(driver, By.XPATH, "//div[@class='tw-flex-wrap tw-tower tw-tower--300 tw-tower--gutter-xs']")
+        all_clips = driver.find_elements_by_xpath("//a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
+    except Exception as e:
+        print(f"Could not find the clips table. Error: {e}")
+        return
 
-    # TODO: Getting 0 clips
-    # try:
-    #     clips_table = wait_for_element(driver, By.XPATH, "//div[@class='tw-flex-wrap tw-tower tw-tower--300 tw-tower--gutter-xs']")
-    #     all_clips = clips_table.find_elements_by_xpath("./a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
-    # except Exception as e:
-    #     print(f"Could not find the clips table. Error: {e}")
-    #     return
-    
     # TODO: Guard for 0 clips found
     print(f"Total clips found: {len(all_clips)}")
 
@@ -58,11 +56,9 @@ def getclips(url,num_clip):
         driver.get(clip_href)
 
         try:
-            #video_tag = wait_for_element(driver, By.XPATH, "//video")
-            #video_url = video_tag.get_attribute("src")
-
+            video_tag = wait_for_element(driver, By.XPATH, "//video")
             time.sleep(1)
-            video_url = driver.find_element_by_xpath("//video").get_attribute("src")
+            video_url = video_tag.get_attribute("src")
         except Exception as e:
             print(f"Could not find the video tag. Error: {e}")
             return

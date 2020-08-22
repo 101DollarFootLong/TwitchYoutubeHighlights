@@ -24,5 +24,5 @@ if __name__ == "__main__":
     getclips(valorant, num_clips)
     text_position = position["topleft"]
     render(text_position)
-    clean_download_directory(os.getcwd()+"\\DownloadedVideos")
+    clean_download_directory(os.getcwd())
     #upload(None,None,None)
