@@ -9,6 +9,7 @@ import os
 
 
 def Create_Service(client_secret_file, api_name, api_version, *scopes):
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
     print(client_secret_file, api_name, api_version, scopes, sep='-')
     print(f"Create_Service:Google.py: {os.getcwd()}")
     CLIENT_SECRET_FILE = client_secret_file
@@ -18,8 +19,7 @@ def Create_Service(client_secret_file, api_name, api_version, *scopes):
     print(SCOPES)
 
     cred = None
-
-    pickle_file = f'token_{API_SERVICE_NAME}_{API_VERSION}.pickle'
+    pickle_file = f'..\\dependencies\\token_{API_SERVICE_NAME}_{API_VERSION}.pickle'
     # print(pickle_file)
 
     if os.path.exists(pickle_file):

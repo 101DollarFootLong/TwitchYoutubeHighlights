@@ -1,6 +1,7 @@
 import os
 from moviepy.editor import *
 import shutil
+import random
 
 def text_editor(text_pos):
     print(f"text_editor: {os.getcwd()}")
@@ -29,8 +30,8 @@ def text_editor(text_pos):
 
             text_clip = VideoFileClip(output_name)
             clips.append(text_clip)
-
-    return clips
+    # return a shuffled version of the videos 
+    return random.shuffle(clips)
 
 def render(render_video, text_pos):
     os.chdir(os.path.dirname(os.path.realpath(__file__)))

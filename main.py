@@ -1,6 +1,7 @@
 from core.bin.movie import render
 from core.bin.extractclips import getclips,clean_download_directory
-from core.bin.upload_video import upload
+from core.bin.upload_api import upload_api
+from core.bin.upload_selenium import upload_selenium
 import os 
 import logging
 import time
@@ -15,7 +16,7 @@ print(os.getcwd())
 logger.info("="*65)
 logger.info(os.getcwd())
 
-url_dict = {"fall_guys" : " ",
+url_dict = {"fall_guys" : "https://www.twitch.tv/directory/game/Fall%20guys/clips?range=7d",
             "league" : "https://www.twitch.tv/directory/game/League%20of%20Legends/clips?range=7d",
             "valorant" : "https://www.twitch.tv/directory/game/VALORANT/clips?range=7d"}
 
@@ -33,10 +34,10 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Edit
-    game_type = "valorant"
+    game_type = "fall_guys"
     url = url_dict[game_type]
-    num_clips = 10
-    text_position = position["topleft"]
+    num_clips = 25
+    text_position = position["topcenter"]
 
     render_name = f"{game_type}_{str(num_clips)}clips_{str(datetime.now()).split()[0]}.mp4"
 
@@ -49,7 +50,8 @@ if __name__ == "__main__":
     # Must follow the two naming convention:
     ## TitleDescription file: 'youtube_infos.json
     ## Thumbnail file: 'thumbnail.jpg'
-    #upload(f"Rendered\\{render_name}") 
+    # render_name = "fall_guys_20clips_2020-08-23.mp4"
+    # upload_selenium(render_name) 
 
     print("--- %s seconds ---" % (time.time() - start_time))
     logger.info("--- %s seconds ---" % (time.time() - start_time))

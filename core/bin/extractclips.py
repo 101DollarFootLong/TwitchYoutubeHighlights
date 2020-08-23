@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.options import Options
 
 # Setting logger 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,12 @@ def getclips(url,num_clip):
     profile.set_preference("browser.download.manager.showWhenStarting", False)
     profile.set_preference("browser.download.dir", video_download_directory)
     profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "binary/octet-stream")
-    driver = webdriver.Firefox(executable_path='..\\dependencies\\geckodriver',firefox_profile=profile)
+
+    ## Headless start option
+    options = Options()
+    #options.headless = True
+    options.headless = False
+    driver = webdriver.Firefox(executable_path='..\\dependencies\\geckodriver',firefox_profile=profile, options=options)
 
     driver.get(url)
     #oringal_window = driver.window_handles[0]

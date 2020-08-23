@@ -21,3 +21,4 @@ core/dependencies/client_secret.json
 core/dependencies/token_youtube_v3.pickle
 MainLogFile.log
 *.mp3
+dependencies/geckodriver.exe/youtube.com.pkl
