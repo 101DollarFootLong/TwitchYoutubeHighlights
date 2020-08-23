@@ -10,12 +10,18 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 
 # Setting logger 
 logger = logging.getLogger(__name__)
 
+# gloabl dict
+creator_names_dict = {}
+
+oringal_window = ''
+
 def getclips(url,num_clip):
-    """Download the top clips on twitch and save it into DownloadedVideos directory
+    """Download the top clips on twitch and save it into Videos\\DownloadedVideos directory
 
     Args:
         url (String): The url of a given game clip
@@ -26,7 +32,7 @@ def getclips(url,num_clip):
 
     # Making sure the working director is core
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    video_download_directory = os.getcwd().replace('core', 'DownloadedVideos')
+    video_download_directory = os.getcwd().replace('core\\bin', 'videos\\Downloaded')
 
 
     # Firefox
@@ -35,9 +41,10 @@ def getclips(url,num_clip):
     profile.set_preference("browser.download.manager.showWhenStarting", False)
     profile.set_preference("browser.download.dir", video_download_directory)
     profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "binary/octet-stream")
-    driver = webdriver.Firefox(executable_path='..\\Dependencies\\geckodriver',firefox_profile=profile)
+    driver = webdriver.Firefox(executable_path='..\\dependencies\\geckodriver',firefox_profile=profile)
 
     driver.get(url)
+    #oringal_window = driver.window_handles[0]
     logger.info(f"Opening starting url: {url}")
 
     try:
@@ -74,37 +81,68 @@ def getclips(url,num_clip):
             return
         
         video_url_lst.append(clip_href)
-        download_file(driver,video_url, video_download_directory)
+        #creator_names_dict = {}
+        download_file(driver,clip_href,video_url, video_download_directory)
         time.sleep(2)
 
-    rename_files(video_download_directory, video_url_lst)
-    driver.close()
+    logger.info(f"{len(video_url_lst)} video urls: {video_url_lst}")
 
-def rename_files(dir,url_lst):
+    # Clean out the empty files 
+    clean_download_directory(video_download_directory,"empty")
+
+    driver.quit()
+
+# def rename_files(dir,url_lst):
+#     # TODO: PermissionError: [WinError 32] The process cannot 
+#     # access the file because it is being used by another process
+    
+#     # Change the directory to the Videos\\DownloadedVideos folder
+#     os.chdir(dir)
+#     files = os.listdir(".")
+#     files.sort(key=os.path.getctime)
+#     creator_names_dict = {}
+
+#     for i in range(0,len(files)):
+#         try: 
+#             # Added the _ at the end of each clip for splitting later
+#             creator_name = re.split('.tv/|/clip',url_lst[i])[1]
+#             if creator_name not in creator_names_dict:
+#                 creator_names_dict[creator_name] = 1
+#                 os.rename(files[i],creator_name+"_.mp4")
+#             else:
+#                 # Make sure to increment the right repeting creator
+
+#                 creator_names_dict[creator_name] = creator_names_dict[creator_name] + 1
+#                 current_count = creator_names_dict[creator_name] 
+#                 os.rename(files[i],creator_name+ "_" +str(current_count)+".mp4")
+#         except IndexError as e:
+#             print(f"Rename issue: {e}")
+#             logger.error(f"Rename issue: {e}")
+#             return
+
+def rename_files(dir,file,clip_href,url_lst):
     # TODO: PermissionError: [WinError 32] The process cannot 
     # access the file because it is being used by another process
-    
-    # Change the directory to the downloadedvideos folder
     os.chdir(dir)
-    files = os.listdir(".")
-    files.sort(key=os.path.getctime)
-    creator_names_dict = {}
-
-    for i in range(0,len(files)):
+    try: 
         # Added the _ at the end of each clip for splitting later
-        creator_name = re.split('.tv/|/clip',url_lst[i])[1]
+        creator_name = re.split('.tv/|/clip',clip_href)[1]
         if creator_name not in creator_names_dict:
             creator_names_dict[creator_name] = 1
-            os.rename(files[i],creator_name+"_.mp4")
+            os.rename(file,creator_name+"_.mp4")
         else:
             # Make sure to increment the right repeting creator
 
             creator_names_dict[creator_name] = creator_names_dict[creator_name] + 1
             current_count = creator_names_dict[creator_name] 
-
-            os.rename(files[i],creator_name+ "_" +str(current_count)+".mp4")
+            os.rename(file,creator_name+ "_" +str(current_count)+".mp4")
         
-def download_file(driver, video_url, dir):
+    except IndexError as e:
+        print(f"Rename issue: {e}")
+        logger.error(f"Rename issue: {e}")
+        return
+        
+def download_file(driver, clip_href,video_url, dir):
     """
     Waits for Chrome to finish downloading the file  
     Chrome first downloads the file with an extension of .crdownloaded which is renamed on completion
@@ -113,42 +151,70 @@ def download_file(driver, video_url, dir):
         video_url (String): A .mp4 video url
         dir (String): The directory for the downloaded videos
     """
+    previous_dir = os.listdir(dir)
     # Fix the failed to download file by switching to firefox browser
     # Add a new window when try to download the mp4 file.
+
+    # list_of_windows = driver.window_handles
+    # if len(list_of_windows) > 1:
+    #     for handle in list_of_windows:
+    #         if handle != oringal_window:
+    #             driver.switch_to.window(window_name=driver.window_handles[handle])
+    #             driver.close()
+    #     driver.switch_to.window(window_name=oringal_window)
+
     logger.info("Attempting to download the file")
-    driver.execute_script(f"window.open('{video_url}','_blank')")
+    # driver.execute_script(f"window.open('{video_url}')")
+    driver.execute_script(f"window.open('{video_url}')")
+    # driver.execute_script("window.open()")
+    # driver.switch_to.window(driver.window_handles[-1])
+    # print(video_url)
+    # driver.get(video_url)
+    # driver.close()
+    # driver.switch_to.window(driver.window_handles[-1])
+
     time.sleep(2)
     time_out = time.time() + 60
     
     finished = False
-    file_name = ""
 
     while not finished and time.time() < time_out:
         finished = True
         files = os.listdir(dir)
         for file in files:
             if re.search(r'.part', file):
-                #file_name = file.split(".crdownload")[0]
-                file_name = file.split(".part")[0]
                 finished = False
 
-    if not finished:
-        logger.error(f"Download didn't finish after 60 seconds. URL: {url}")
+    after_dir = os.listdir(dir)
+    diff_lst = list(set(after_dir) - set(previous_dir))
+    if finished and len(diff_lst) == 1:
+        print(diff_lst[0])
+        rename_files(dir,str(diff_lst[0]),clip_href,video_url)
+    else:
+        print(f"Error: Download didn't finish after 60 seconds. URL: {video_url}")
+        logger.error(f"Download didn't finish after 60 seconds. URL: {video_url}")
         return
 
-def clean_download_directory(dir):
+def clean_download_directory(dir, deletetype="mp4"):
     """
     Given a directory path remove all mp4 files
     Args:
         dir (String): The directory for the downloaded videos
     """
-    
-    print("Cleaning your directory!!")
-    logger.info("Cleaning your directory!!")
-    filelist = [ f for f in os.listdir(dir) if f.endswith(".mp4") ]
-    for f in filelist:
-        os.remove(os.path.join(dir, f))
+    if deletetype == "mp4":
+        print("Cleaning out all .mp4 files!!")
+        logger.info("Cleaning your directory!!")
+        filelist = [ f for f in os.listdir(dir) if f.endswith(".mp4") ]
+        for f in filelist:
+            os.remove(os.path.join(dir, f))
 
+    # clean out empty files
+    if deletetype == "empty":
+        print("Cleaning empty files")
+        logger.info("Cleaning your directory!!")
+        filelist = [f for f in os.listdir(dir) if os.stat(f).st_size == 0]
+        for f in filelist:
+            os.remove(os.path.join(dir, f))
 
 def get_all_hrefs(clip_list):
     """

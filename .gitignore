@@ -17,3 +17,7 @@ DownloadedVideos/AT-cm 823982093.mp4.part
 Dependencies/client_secret.json
 Dependencies/token_youtube_v3.pickle
 geckodriver.log
+core/dependencies/client_secret.json
+core/dependencies/token_youtube_v3.pickle
+MainLogFile.log
+*.mp3
