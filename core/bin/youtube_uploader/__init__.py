@@ -13,7 +13,7 @@ import os
 
 logging.basicConfig()
 
-
+## TODO: Fix dependencies 
 def load_metadata(metadata_json_path: Optional[str] = None) -> DefaultDict[str, str]:
     if metadata_json_path is None:
         return defaultdict(str)
@@ -60,7 +60,7 @@ class YouTubeUploader:
         time.sleep(Constant.USER_WAITING_TIME)
 
         if self.browser.has_cookies_for_current_website():
-            self.browser.load_cookies()
+            self.browser.load_cookies("core\\dependencies")
             time.sleep(Constant.USER_WAITING_TIME)
             self.browser.refresh()
         else:
@@ -68,7 +68,7 @@ class YouTubeUploader:
             input()
             self.browser.get(Constant.YOUTUBE_URL)
             time.sleep(Constant.USER_WAITING_TIME)
-            self.browser.save_cookies()
+            self.browser.save_cookies("core\\dependencies")
 
     def __upload(self) -> (bool, Optional[str]):
         self.browser.get(Constant.YOUTUBE_URL)

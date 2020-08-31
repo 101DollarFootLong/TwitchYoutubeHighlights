@@ -16,7 +16,7 @@ from selenium.webdriver.firefox.options import Options
 # Setting logger 
 logger = logging.getLogger(__name__)
 
-# gloabl dict
+# global dict
 creator_names_dict = {}
 
 oringal_window = ''
@@ -45,11 +45,15 @@ def getclips(url,num_clip):
 
     ## Headless start option
     options = Options()
-    #options.headless = True
-    options.headless = False
+    options.headless = True
     driver = webdriver.Firefox(executable_path='..\\dependencies\\geckodriver',firefox_profile=profile, options=options)
-
     driver.get(url)
+    time.sleep(1)
+
+    # Scroll down until we found n number of clips
+    target =  driver.find_element_by_xpath(f"/html/body/div[1]/div/div[2]/div/main/div[2]/div[3]/div/div/div/div[2]/div[4]/div[1]/div/div/div/div[{num_clip}]")
+    driver.execute_script('arguments[0].scrollIntoView(true);', target)
+
     #oringal_window = driver.window_handles[0]
     logger.info(f"Opening starting url: {url}")
 
@@ -88,7 +92,12 @@ def getclips(url,num_clip):
         
         video_url_lst.append(clip_href)
         #creator_names_dict = {}
-        download_file(driver,clip_href,video_url, video_download_directory)
+        isDownloaded = download_file(driver,clip_href,video_url, video_download_directory)
+
+        if isDownloaded == False:
+            print("Attempting to redownload the failed file")
+            download_file(driver,clip_href,video_url, video_download_directory)
+
         time.sleep(2)
 
     logger.info(f"{len(video_url_lst)} video urls: {video_url_lst}")
@@ -96,53 +105,36 @@ def getclips(url,num_clip):
     # Clean out the empty files 
     clean_download_directory(video_download_directory,"empty")
 
+    downloaded_files_num = len(os.listdir(video_download_directory))
+    print(f"Total number of file downloaded: {str(downloaded_files_num)}")
+    logger.info(f"Total number of file downloaded: {str(downloaded_files_num)}")
+
     driver.quit()
-
-# def rename_files(dir,url_lst):
-#     # TODO: PermissionError: [WinError 32] The process cannot 
-#     # access the file because it is being used by another process
-    
-#     # Change the directory to the Videos\\DownloadedVideos folder
-#     os.chdir(dir)
-#     files = os.listdir(".")
-#     files.sort(key=os.path.getctime)
-#     creator_names_dict = {}
-
-#     for i in range(0,len(files)):
-#         try: 
-#             # Added the _ at the end of each clip for splitting later
-#             creator_name = re.split('.tv/|/clip',url_lst[i])[1]
-#             if creator_name not in creator_names_dict:
-#                 creator_names_dict[creator_name] = 1
-#                 os.rename(files[i],creator_name+"_.mp4")
-#             else:
-#                 # Make sure to increment the right repeting creator
-
-#                 creator_names_dict[creator_name] = creator_names_dict[creator_name] + 1
-#                 current_count = creator_names_dict[creator_name] 
-#                 os.rename(files[i],creator_name+ "_" +str(current_count)+".mp4")
-#         except IndexError as e:
-#             print(f"Rename issue: {e}")
-#             logger.error(f"Rename issue: {e}")
-#             return
 
 def rename_files(dir,file,clip_href,url_lst):
     # TODO: PermissionError: [WinError 32] The process cannot 
     # access the file because it is being used by another process
     os.chdir(dir)
+    output_name = ""
     try: 
         # Added the _ at the end of each clip for splitting later
         creator_name = re.split('.tv/|/clip',clip_href)[1]
         if creator_name not in creator_names_dict:
             creator_names_dict[creator_name] = 1
-            os.rename(file,creator_name+"_.mp4")
+            output_name = creator_name+"_.mp4"
+            os.rename(file,output_name)
+            print(f"Renaming {file} -> {output_name}")
+            logger.info(f"Renaming {file} -> {output_name}")
         else:
             # Make sure to increment the right repeting creator
 
             creator_names_dict[creator_name] = creator_names_dict[creator_name] + 1
             current_count = creator_names_dict[creator_name] 
-            os.rename(file,creator_name+ "_" +str(current_count)+".mp4")
-        
+            output_name = creator_name+ "_" +str(current_count)+".mp4"
+            os.rename(file,output_name)
+
+            print(f"Renaming {file} -> {output_name}")
+            logger.info(f"Renaming {file} -> {output_name}")
     except IndexError as e:
         print(f"Rename issue: {e}")
         logger.error(f"Rename issue: {e}")
@@ -161,29 +153,16 @@ def download_file(driver, clip_href,video_url, dir):
     # Fix the failed to download file by switching to firefox browser
     # Add a new window when try to download the mp4 file.
 
-    # list_of_windows = driver.window_handles
-    # if len(list_of_windows) > 1:
-    #     for handle in list_of_windows:
-    #         if handle != oringal_window:
-    #             driver.switch_to.window(window_name=driver.window_handles[handle])
-    #             driver.close()
-    #     driver.switch_to.window(window_name=oringal_window)
-
     logger.info("Attempting to download the file")
     # driver.execute_script(f"window.open('{video_url}')")
     driver.execute_script(f"window.open('{video_url}')")
-    # driver.execute_script("window.open()")
-    # driver.switch_to.window(driver.window_handles[-1])
-    # print(video_url)
-    # driver.get(video_url)
-    # driver.close()
-    # driver.switch_to.window(driver.window_handles[-1])
 
     time.sleep(2)
     time_out = time.time() + 60
     
     finished = False
 
+    # Check to see if the file is downloaded
     while not finished and time.time() < time_out:
         finished = True
         files = os.listdir(dir)
@@ -191,15 +170,17 @@ def download_file(driver, clip_href,video_url, dir):
             if re.search(r'.part', file):
                 finished = False
 
+    # Find out the new downloaded file name
     after_dir = os.listdir(dir)
     diff_lst = list(set(after_dir) - set(previous_dir))
+
     if finished and len(diff_lst) == 1:
-        print(diff_lst[0])
         rename_files(dir,str(diff_lst[0]),clip_href,video_url)
+        return True
     else:
         print(f"Error: Download didn't finish after 60 seconds. URL: {video_url}")
         logger.error(f"Download didn't finish after 60 seconds. URL: {video_url}")
-        return
+        return False
 
 def clean_download_directory(dir, deletetype="mp4"):
     """
@@ -208,10 +189,12 @@ def clean_download_directory(dir, deletetype="mp4"):
         dir (String): The directory for the downloaded videos
     """
     if deletetype == "mp4":
+        print(f"dir {dir}")
         print("Cleaning out all .mp4 files!!")
         logger.info("Cleaning your directory!!")
         filelist = [ f for f in os.listdir(dir) if f.endswith(".mp4") ]
         for f in filelist:
+            # PermissionError: [WinError 32] The process cannot access the file because it is being used by another process:
             os.remove(os.path.join(dir, f))
 
     # clean out empty files
@@ -256,7 +239,7 @@ def wait_for_element(driver,
       except TimeoutException:
         return None
 
-
+    
 
 
     
