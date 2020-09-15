@@ -36,7 +36,7 @@ if __name__ == "__main__":
     # Edit
     game_type = "fall_guys"
     url = url_dict[game_type]
-    num_clips = 25
+    num_clips = 10
     text_position = position["topcenter"]
 
     render_name = f"{game_type}_{str(num_clips)}clips_{str(datetime.now()).split()[0]}.mp4"
