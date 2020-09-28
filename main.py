@@ -40,22 +40,17 @@ if __name__ == "__main__":
 
     # Edit contents
     game_type = "fall_guys"
-    num_clips = 10
     url = url_dict[game_type]
-<<<<<<< HEAD
     num_clips = 10
     text_position = position["topcenter"]
-=======
-    text_position = game_text_position[game_type]
->>>>>>> c97c532d8ee925ce6d108fd7efa9bf011d8f198e
 
     render_name = f"{game_type}_{str(num_clips)}clips_{str(datetime.now()).split()[0]}.mp4"
 
     # # Begin
     logger.info("Starting main.py script")
-    # getclips(url, num_clips)
-    # timer_dict = render(render_name,text_position)
-    # clean_download_directory(os.getcwd())
+    getclips(url, num_clips)
+    timer_dict = render(render_name,text_position)
+    clean_download_directory(os.getcwd())
 
     # Must follow the two naming convention:
     ## TitleDescription file: 'youtube_infos.json
@@ -64,8 +59,8 @@ if __name__ == "__main__":
     # Add the timers for the desciption
     #timer_dict_str = json.dumps(timer_dict)
     #print(timer_dict_str)
-    render_name = "valorant_25clips_2020-08-26.mp4"
-    upload_selenium(render_name) 
+    # render_name = "valorant_25clips_2020-08-26.mp4"
+    # upload_selenium(render_name) 
 
     print("--- %s seconds ---" % (time.time() - start_time))
     logger.info("--- %s seconds ---" % (time.time() - start_time))

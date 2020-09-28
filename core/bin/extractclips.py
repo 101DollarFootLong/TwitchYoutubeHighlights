@@ -45,62 +45,76 @@ def getclips(url,num_clip):
 
     ## Headless start option
     options = Options()
-    options.headless = True
+    # options.headless = True
     driver = webdriver.Firefox(executable_path='..\\dependencies\\geckodriver',firefox_profile=profile, options=options)
     driver.get(url)
     time.sleep(1)
 
     # Scroll down until we found n number of clips
+    wait_for_element(driver, By.XPATH, '//body')
     target =  driver.find_element_by_xpath(f"/html/body/div[1]/div/div[2]/div/main/div[2]/div[3]/div/div/div/div[2]/div[4]/div[1]/div/div/div/div[{num_clip}]")
     driver.execute_script('arguments[0].scrollIntoView(true);', target)
 
-    #oringal_window = driver.window_handles[0]
     logger.info(f"Opening starting url: {url}")
 
     try:
         time.sleep(1)
-        clips_table = wait_for_element(driver, By.XPATH, "//div[@class='tw-flex-wrap tw-tower tw-tower--300 tw-tower--gutter-xs']")
+        wait_for_element(driver, By.XPATH, "//div[@class='tw-flex-wrap tw-tower tw-tower--300 tw-tower--gutter-xs']")
         all_clips = driver.find_elements_by_xpath("//a[@class='tw-full-width tw-interactive tw-link tw-link--hover-underline-none tw-link--inherit']")
     except Exception as e:
         print(f"Could not find the clips table. Error: {e}")
         logger.error(f"Could not find the clips table. Error: {e}")
         return
 
-    # TODO: Guard for 0 clips found
+    # Check for 0 clips found
+    if len(all_clips) == 0:
+        print(f"Total number of clips found was 0, ending run.")
+        return
+
     print(f"Total clips found: {len(all_clips)}")
     logger.info(f"Total clips found: {len(all_clips)}")
 
+    # Get all the href links
     all_clips = get_all_hrefs(all_clips)
-    video_url_lst = []
+    print(f"List of clips: {all_clips}")
+    video_download_urls = []
 
     # TODO: Remove before implementing the moviepy
-    # clean_download_directory(video_download_directory)
 
-    for clip_href in all_clips[0:num_clip]:
-        print(f"Opening Clip: {clip_href}")
-        logger.info(f"Opening Clip: {clip_href}")
-        driver.get(clip_href)
+    # Clean the directory before trying to download new clips
+    clean_download_directory(video_download_directory)
+
+    # Loop through all the video clips found
+    for video_url in all_clips[0:num_clip]:
+        print(f"Opening Clip: {video_url}")
+        logger.info(f"Opening Clip: {video_url}")
+        driver.get(video_url)
+        time.sleep(2)
 
         try:
             video_tag = wait_for_element(driver, By.XPATH, "//video")
-            time.sleep(1)
-            video_url = video_tag.get_attribute("src")
+            download_url = video_tag.get_attribute("src")
         except Exception as e:
             print(f"Could not find the video tag. Error: {e}")
             logger.error(f"Could not find the video tag. Error: {e}")
-            return
+            continue
+
+        # Sometimes the download_url is an empty string
+        if download_url[-4:] != '.mp4':
+            print(f"The Download URL was not found, skipping to the next clip.")
+            continue
         
-        video_url_lst.append(clip_href)
-        #creator_names_dict = {}
-        isDownloaded = download_file(driver,clip_href,video_url, video_download_directory)
+        video_download_urls.append(download_url)
+        #creator_names_dict = {}           
+        download_sucessful = download_file(driver,download_url,video_url, video_download_directory)
 
-        if isDownloaded == False:
-            print("Attempting to redownload the failed file")
-            download_file(driver,clip_href,video_url, video_download_directory)
+        if download_sucessful:
+            print(f"Download successful.")      
+        else:
+            print(f"Download failed. Skipping to next clip.")
 
-        time.sleep(2)
 
-    logger.info(f"{len(video_url_lst)} video urls: {video_url_lst}")
+    # logger.info(f"{len(video_url_lst)} video urls: {video_url_lst}")
 
     # Clean out the empty files 
     clean_download_directory(video_download_directory,"empty")
@@ -140,29 +154,31 @@ def rename_files(dir,file,clip_href,url_lst):
         logger.error(f"Rename issue: {e}")
         return
         
-def download_file(driver, clip_href,video_url, dir):
+def download_file(driver, download_url,video_url, dir):
+
     """
-    Waits for Chrome to finish downloading the file  
-    Chrome first downloads the file with an extension of .crdownloaded which is renamed on completion
+    Waits for Firefox to finish downloading the file  
+    Firefox first downloads the file with an extension of .part which is renamed on completion
     Args:
-        driver (chromedriver object): The current chrome driver
-        video_url (String): A .mp4 video url
+        driver: The current Firefox driver
+        download_url (String): A .mp4 url
+        video_url: The URL to the clip we are trying to to download
         dir (String): The directory for the downloaded videos
     """
+
+    # Get list of files before trying to download
     previous_dir = os.listdir(dir)
-    # Fix the failed to download file by switching to firefox browser
-    # Add a new window when try to download the mp4 file.
 
-    logger.info("Attempting to download the file")
-    # driver.execute_script(f"window.open('{video_url}')")
-    driver.execute_script(f"window.open('{video_url}')")
-
+    # Open the .mp4 URL to start the download
+    logger.info(f"Attempting to download the file for clip: {video_url}")
+    driver.execute_script(f"window.open('{download_url}')")
     time.sleep(2)
+
     time_out = time.time() + 60
     
     finished = False
 
-    # Check to see if the file is downloaded
+    # Loop until the download is finished or timesout 
     while not finished and time.time() < time_out:
         finished = True
         files = os.listdir(dir)
@@ -170,17 +186,21 @@ def download_file(driver, clip_href,video_url, dir):
             if re.search(r'.part', file):
                 finished = False
 
-    # Find out the new downloaded file name
+    # Get list of files after downloading the file
     after_dir = os.listdir(dir)
+
+    # Get the difference betwen before and after lists
     diff_lst = list(set(after_dir) - set(previous_dir))
 
+    # If the difference is 1 then the download was compelted
     if finished and len(diff_lst) == 1:
-        rename_files(dir,str(diff_lst[0]),clip_href,video_url)
+        rename_files(dir,str(diff_lst[0]),video_url,download_url)
         return True
     else:
         print(f"Error: Download didn't finish after 60 seconds. URL: {video_url}")
         logger.error(f"Download didn't finish after 60 seconds. URL: {video_url}")
         return False
+
 
 def clean_download_directory(dir, deletetype="mp4"):
     """
@@ -205,6 +225,7 @@ def clean_download_directory(dir, deletetype="mp4"):
         for f in filelist:
             os.remove(os.path.join(dir, f))
 
+
 def get_all_hrefs(clip_list):
     """
     Given a list of a-tags return a list of hrefs
@@ -213,8 +234,12 @@ def get_all_hrefs(clip_list):
     """  
     href_lst = []
     for clip in clip_list:
-        href_lst.append(clip.get_attribute("href"))
+        try:
+            href_lst.append(clip.get_attribute("href"))
+        except Exception as e:
+            continue
     return href_lst
+
 
 def wait_for_element(driver,
                         by_type,
