@@ -91,17 +91,23 @@ def getclips(url,num_clip):
         driver.get(video_url)
         time.sleep(2)
 
-        try:
-            video_tag = wait_for_element(driver, By.XPATH, "//video")
-            download_url = video_tag.get_attribute("src")
-        except Exception as e:
-            print(f"Could not find the video tag. Error: {e}")
-            logger.error(f"Could not find the video tag. Error: {e}")
-            continue
+        # Keep trying to find download_url for 60 seconds
+        timeout = time.time() + 60
+        while time.time() < timeout:
+            try:
+                video_tag = wait_for_element(driver, By.XPATH, "//video")
+                download_url = video_tag.get_attribute("src")
+            except Exception as e:
+                print(f"Could not find the video tag. Error: {e}")
+                logger.error(f"Could not find the video tag. Error: {e}")
+                break
+ 
+            if download_url[-4:] == '.mp4':
+                break
 
         # Sometimes the download_url is an empty string
         if download_url[-4:] != '.mp4':
-            print(f"The Download URL was not found, skipping to the next clip.")
+            print(f"The Download URL was not found after 60 seconds. Skipping this clip")
             continue
         
         video_download_urls.append(download_url)
