@@ -52,9 +52,8 @@ def getclips(url,num_clip):
 
     # Scroll down until we found n number of clips
     wait_for_element(driver, By.XPATH, '//body')
-    target =  driver.find_element_by_xpath(f"/html/body/div[1]/div/div[2]/div/main/div[2]/div[3]/div/div/div/div[2]/div[4]/div[1]/div/div/div/div[{num_clip}]")
+    target =  driver.find_element_by_xpath(f'//*[@id="root"]/div/div[2]/div/main/div[2]/div[3]/div/div/div/div/div/div[5]/div[1]/div/div/div/div[{num_clip}]')
     driver.execute_script('arguments[0].scrollIntoView(true);', target)
-
     logger.info(f"Opening starting url: {url}")
 
     try:

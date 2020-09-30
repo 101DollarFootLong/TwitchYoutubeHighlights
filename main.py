@@ -39,9 +39,9 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Edit contents
-    game_type = "fall_guys"
+    game_type = "league"
     url = url_dict[game_type]
-    num_clips = 10
+    num_clips = 25
     text_position = position["topcenter"]
 
     render_name = f"{game_type}_{str(num_clips)}clips_{str(datetime.now()).split()[0]}.mp4"
