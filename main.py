@@ -19,7 +19,8 @@ logger.info(os.getcwd())
 
 url_dict = {"fall_guys" : "https://www.twitch.tv/directory/game/Fall%20guys/clips?range=7d",
             "league" : "https://www.twitch.tv/directory/game/League%20of%20Legends/clips?range=7d",
-            "valorant" : "https://www.twitch.tv/directory/game/VALORANT/clips?range=7d"}
+            "valorant" : "https://www.twitch.tv/directory/game/VALORANT/clips?range=7d",
+            "cyberpunk" : "https://www.twitch.tv/directory/game/Cyberpunk%202077/clips?range=7d"}
 
 
 # Ideal positions: Fall guy - topcenter | League - topleft
@@ -33,7 +34,8 @@ position = {"topleft":"x=10:y=10",
             
 game_text_position = {"fall_guys" : position["topcenter"],
             "league" : position["bottomright"],
-            "valorant" : position["topright"]}
+            "valorant" : position["topright"],
+            "cyberpunk" : position["topright"]}
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -42,24 +44,24 @@ if __name__ == "__main__":
     game_type = "league"
     url = url_dict[game_type]
     num_clips = 25
-    text_position = position["topcenter"]
+    text_position = game_text_position[game_type]
 
     render_name = f"{game_type}_{str(num_clips)}clips_{str(datetime.now()).split()[0]}.mp4"
 
     # # Begin
     logger.info("Starting main.py script")
-    getclips(url, num_clips)
+    # getclips(url, num_clips)
     timer_dict = render(render_name,text_position)
     clean_download_directory(os.getcwd())
 
     # Must follow the two naming convention:
-    ## TitleDescription file: 'youtube_infos.json
-    ## Thumbnail file: 'thumbnail.jpg'
+    # TitleDescription file: 'youtube_infos.json
+    # Thumbnail file: 'thumbnail.jpg'
 
     # Add the timers for the desciption
-    #timer_dict_str = json.dumps(timer_dict)
-    #print(timer_dict_str)
-    # render_name = "valorant_25clips_2020-08-26.mp4"
+    timer_dict_str = json.dumps(timer_dict)
+    print(timer_dict_str)
+    # render_name = "cyberpunk_25clips_2020-12-09.mp4"
     # upload_selenium(render_name) 
 
     print("--- %s seconds ---" % (time.time() - start_time))
